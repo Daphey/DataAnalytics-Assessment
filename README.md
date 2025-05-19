@@ -103,7 +103,7 @@ The schema involved large and complex table structures (savings_savingsaccount, 
 - Rounded tenure months using TIMESTAMPDIFF(MONTH, date_joined, CURRENT_DATE) for consistency.
 
 
-### 4: The transaction_date field had date formatting inconsistencies.
+### 5: The transaction_date field had date formatting inconsistencies.
 
 **My Solution::**
 I used the DATE_FORMAT() function to standardize it to %Y-%m (month granularity) and ensured NULL-safe handling. Grouping by this normalized date ensured accurate monthly counts.
