@@ -11,10 +11,11 @@ This repository contains my solutions to the SQL-based assessment for the Data A
 Find customers who have **at least one funded savings plan** and **at least one funded investment plan**, and sort them by **total deposits**.
 
 **Approach:**  
-- I joined the `users_customuser`, `savings_savingsaccount`, and `plans_plan` tables on the customer ID.
-- I filtered for records with amounts greater than zero (to ensure they are funded).
-- Then, I used `COUNT(DISTINCT ...)` to get savings and investment plan counts.
-- I summed the deposit amounts and sorted the results.
+To identify users with both a funded savings plan and a funded investment plan, 
+- I joined the savings_savingsaccount, plans_plan, and users_customuser tables.
+- I then filtered for plans/accounts with an amount greater than zero and
+- Grouped them by owner_id to count and sum their deposits.
+- Then, I joined both savings and investment summaries back to the user table and computed the total deposits per customer.
 
 
 ### 2. **Transaction Frequency Segmentation**
@@ -70,9 +71,9 @@ While running a large `JOIN` query with filters and aggregations, I encountered:
 
 **My Solution:**
 
-- I broke the query down step by step. 
-- Then I Ran intermediate joins and filters independently to optimize performance.
-- Used LIMIT for previewing data before applying heavy aggregations.
+- I split the logic into Common Table Expressions (CTEs) for savings and investment summaries to simplify the final join.
+
+- Ensured proper WHERE clause filtering before joining.
 
 
 ### 2: Complex Schema with Long Table Names
@@ -84,5 +85,25 @@ The schema involved large and complex table structures (savings_savingsaccount, 
 -  Reviewed the schema documentation and relationships carefully before writing joins.
 - I used AS aliases extensively to shorten and clarify query structure.
 
+  
+### 3: Some accounts didn’t have recent transaction_date entries, leading to NULLs.
+
+**My Solution:**
+
+- Used MAX(transaction_date) and filtered out NULLs safely.
+- I also used DATEDIFF(CURRENT_DATE, last_transaction_date) to compute inactivity days, and included the type column to distinguish between savings and investments in the combined result.
 
 
+### 4: Some users had tenure < 1 month or no transaction data, which led to divide-by-zero errors.
+
+**My Solution:**
+
+- Used GREATEST(tenure_months, 1) to ensure we never divide by zero.
+- Filtered only users with at least one transaction.
+- Rounded tenure months using TIMESTAMPDIFF(MONTH, date_joined, CURRENT_DATE) for consistency.
+
+
+### 4: The transaction_date field had date formatting inconsistencies.
+
+**My Solution::**
+I used the DATE_FORMAT() function to standardize it to %Y-%m (month granularity) and ensured NULL-safe handling. Grouping by this normalized date ensured accurate monthly counts.
